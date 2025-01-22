@@ -11,6 +11,9 @@ export class Task extends Document {
 
   @Prop({ required: true })
   userId: string;
+
+  @Prop({ default: false }) // Campo booleano con valor por defecto
+  completed: boolean;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);
