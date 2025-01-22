@@ -6,6 +6,8 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Task } from './task.schema';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Injectable()
 export class TaskService {
@@ -13,12 +15,8 @@ export class TaskService {
     @InjectModel(Task.name) private readonly taskModel: Model<Task>,
   ) {}
 
-  async create(
-    title: string,
-    description: string,
-    userId: string,
-  ): Promise<Task> {
-    const newTask = new this.taskModel({ title, description, userId });
+  async create(createTaskDto: CreateTaskDto, userId: string): Promise<Task> {
+    const newTask = new this.taskModel({ ...createTaskDto, userId });
     return newTask.save();
   }
 
@@ -28,8 +26,7 @@ export class TaskService {
 
   async update(
     taskId: string,
-    title: string,
-    description: string,
+    updateTaskDto: UpdateTaskDto,
     userId: string,
   ): Promise<Task> {
     const task = await this.taskModel.findById(taskId);
@@ -37,8 +34,7 @@ export class TaskService {
     if (task.userId !== userId)
       throw new UnauthorizedException('You can only update your own tasks');
 
-    task.title = title;
-    task.description = description;
+    Object.assign(task, updateTaskDto);
     return task.save();
   }
 
