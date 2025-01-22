@@ -1,20 +1,42 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { UserService } from './user.service';
+import { AuthService } from '../auth/auth.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { LoginUserDto } from './dto/login-user.dto';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly authService: AuthService, // Servicio para manejar JWT
+  ) {}
 
   @Post('register')
-  async register(
-    @Body('username') username: string,
-    @Body('password') password: string,
-  ) {
-    return this.userService.create(username, password);
+  async register(@Body() createUserDto: CreateUserDto) {
+    return this.userService.create(
+      createUserDto.username,
+      createUserDto.password,
+    );
   }
 
-  @Get()
-  async getAllUsers() {
-    return this.userService.getAll();
+  @Post('login')
+  async login(@Body() loginUserDto: LoginUserDto) {
+    const user = await this.userService.validateUser(
+      loginUserDto.username,
+      loginUserDto.password,
+    );
+
+    if (!user) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
+
+    // Genera un token JWT
+    return this.authService.generateJwt(user);
   }
 }

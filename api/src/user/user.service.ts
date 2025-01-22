@@ -25,6 +25,27 @@ export class UserService {
     return bcrypt.compare(password, hashedPassword);
   }
 
+  async validateUser(username: string, password: string): Promise<User | null> {
+    // Busca el usuario por nombre de usuario
+    const user = await this.findByUsername(username);
+
+    if (!user) {
+      return null; // Usuario no encontrado
+    }
+
+    // Valida la contraseña
+    const isPasswordValid = await this.validatePassword(
+      password,
+      user.password,
+    );
+
+    if (!isPasswordValid) {
+      return null; // Contraseña inválida
+    }
+
+    return user; // Retorna el usuario si todo está bien
+  }
+
   // Método adicional para obtener todos los usuarios
   async getAll(): Promise<User[]> {
     return this.userModel.find().exec();
