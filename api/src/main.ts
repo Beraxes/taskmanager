@@ -1,8 +1,8 @@
+import 'dotenv/config';
 import * as dotenv from 'dotenv';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-
 dotenv.config({ path: '.env' });
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   console.log('Loading environment variables...');
