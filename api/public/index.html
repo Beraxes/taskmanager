@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Documentation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #333;
+    }
+    h2 {
+      color: #555;
+    }
+    .section {
+      margin-bottom: 20px;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>API Documentation</h1>
+  <p>Welcome to the API documentation. Here you'll find details on how to use Postman to interact with the API for user registration, login, and managing tasks.</p>
+
+  <div class="section">
+    <h2>1. User Registration</h2>
+    <p>Use the following details to register a new user:</p>
+    <pre>
+      POST /auth/register
+      Content-Type: application/json
+      Body:
+      {
+        "username": "exampleUser",
+        "password": "examplePassword"
+      }
+    </pre>
+    <p>Expected Response:</p>
+    <pre>
+      {
+        "id": "1234567890",
+        "username": "exampleUser"
+      }
+    </pre>
+  </div>
+
+  <div class="section">
+    <h2>2. User Login</h2>
+    <p>Use the following details to log in:</p>
+    <pre>
+      POST /auth/login
+      Content-Type: application/json
+      Body:
+      {
+        "username": "exampleUser",
+        "password": "examplePassword"
+      }
+    </pre>
+    <p>Expected Response:</p>
+    <pre>
+      {
+        "access_token": "your.jwt.token.here"
+      }
+    </pre>
+    <p><strong>Note:</strong> Use the <code>access_token</code> from the response as a Bearer token for authentication in subsequent requests.</p>
+  </div>
+
+  <div class="section">
+    <h2>3. Task Management</h2>
+    <p>The following endpoints allow you to create, view, update, and delete tasks. Remember to include the Bearer token in the headers:</p>
+    <ul>
+      <li><strong>Create Task:</strong>
+        <pre>
+          POST /tasks
+          Headers: Authorization: Bearer <your_token>
+          Body:
+          {
+            "title": "Task Title",
+            "description": "Task Description"
+          }
+        </pre>
+      </li>
+      <li><strong>Get User Tasks:</strong>
+        <pre>
+          GET /tasks
+          Headers: Authorization: Bearer <your_token>
+        </pre>
+      </li>
+      <li><strong>Update Task:</strong>
+        <pre>
+          PATCH /tasks/:id
+          Headers: Authorization: Bearer <your_token>
+          Body:
+          {
+            "title": "Updated Title",
+            "description": "Updated Description"
+          }
+        </pre>
+      </li>
+      <li><strong>Delete Task:</strong>
+        <pre>
+          DELETE /tasks/:id
+          Headers: Authorization: Bearer <your_token>
+        </pre>
+      </li>
+    </ul>
+  </div>
+
+  <p>If you have any questions or issues, feel free to contact the API administrator.</p>
+</body>
+</html>

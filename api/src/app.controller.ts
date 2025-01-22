@@ -1,12 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
-  @Get()
+  @Get('/api-status')
   getHello(): string {
-    return this.appService.getHello();
+    return 'This is a fallback response'; // This will not be used since we are serving static files
   }
 }
