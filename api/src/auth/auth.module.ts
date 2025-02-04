@@ -9,7 +9,7 @@ import { UserModule } from '../user/user.module';
   imports: [
     PassportModule,
     JwtModule.register({
-      secret: 'secretKey', // Cambia esta clave en producción
+      secret: process.env.JWT_SECRET, // Cambia esta clave en producción
       signOptions: { expiresIn: '1h' },
     }),
     forwardRef(() => UserModule), // Usa forwardRef para evitar dependencia circular
