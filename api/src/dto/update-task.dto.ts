@@ -12,4 +12,8 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsBoolean()
   completed?: boolean;
+
+  @IsString()
+  @IsOptional()
+  category?: string;
 }
