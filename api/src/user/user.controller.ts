@@ -19,10 +19,20 @@ export class UserController {
 
   @Post('register')
   async register(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(
+    const existingUser = await this.userService.findByUsernameOrEmail(
       createUserDto.username,
-      createUserDto.password,
+      createUserDto.email,
     );
+
+    if (existingUser) {
+      throw new HttpException(
+        'Username or email already registered',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.userService.create(createUserDto);
+    return { message: 'User successfully created' };
   }
 
   @Post('login')

@@ -3,19 +3,30 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.schema';
+import { CreateUserDto } from '../dto/create-user.dto';
 
 @Injectable()
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
-  async create(username: string, password: string): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    const { email, username, password } = createUserDto;
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new this.userModel({ username, password: hashedPassword });
+    const newUser = new this.userModel({
+      email,
+      username,
+      password: hashedPassword,
+    });
     return newUser.save();
   }
 
-  async findByUsername(username: string): Promise<User | null> {
-    return this.userModel.findOne({ username }).exec();
+  async findByUsernameOrEmail(
+    username: string,
+    email: string,
+  ): Promise<User | null> {
+    return this.userModel.findOne({
+      $or: [{ username }, { email }],
+    });
   }
 
   async validatePassword(
@@ -25,19 +36,21 @@ export class UserService {
     return bcrypt.compare(password, hashedPassword);
   }
 
-  async validateUser(username: string, password: string): Promise<User | null> {
-    // Busca el usuario por nombre de usuario
-    const user = await this.findByUsername(username);
+  async validateUser(
+    identifier: string,
+    password: string,
+  ): Promise<User | null> {
+    // Busca el usuario por email o username
+    const user = await this.userModel.findOne({
+      $or: [{ username: identifier }, { email: identifier }],
+    });
 
     if (!user) {
       return null; // Usuario no encontrado
     }
 
     // Valida la contraseña
-    const isPasswordValid = await this.validatePassword(
-      password,
-      user.password,
-    );
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return null; // Contraseña inválida
