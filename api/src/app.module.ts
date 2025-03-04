@@ -3,7 +3,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { TaskModule } from './task/task.module';
-import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -18,7 +17,7 @@ import { join } from 'path';
     AuthModule,
     TaskModule,
   ],
-  providers: [AppService],
+  providers: [],
   controllers: [AppController],
 })
 export class AppModule {}
