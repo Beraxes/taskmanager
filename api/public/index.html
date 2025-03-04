@@ -36,10 +36,11 @@
     <h2>1. User Registration</h2>
     <p>Use the following details to register a new user:</p>
     <pre>
-      POST /auth/register
+      POST /users/register
       Content-Type: application/json
       Body:
       {
+        "email": "example@email.com",
         "username": "exampleUser",
         "password": "examplePassword"
       }
@@ -47,8 +48,7 @@
     <p>Expected Response:</p>
     <pre>
       {
-        "id": "1234567890",
-        "username": "exampleUser"
+        "message": "User successfully created"
       }
     </pre>
   </div>
@@ -57,7 +57,7 @@
     <h2>2. User Login</h2>
     <p>Use the following details to log in:</p>
     <pre>
-      POST /auth/login
+      POST /users/login
       Content-Type: application/json
       Body:
       {
