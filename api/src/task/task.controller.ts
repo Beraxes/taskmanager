@@ -8,8 +8,6 @@ import {
   Param,
   UseGuards,
   Request,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -22,7 +20,6 @@ export class TaskController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  @UsePipes(new ValidationPipe())
   async createTask(@Body() createTaskDto: CreateTaskDto, @Request() req: any) {
     return this.taskService.create(createTaskDto, req.user.userId);
   }
@@ -35,7 +32,6 @@ export class TaskController {
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  @UsePipes(new ValidationPipe())
   async updateTask(
     @Param('id') id: string,
     @Body() updateTaskDto: UpdateTaskDto,
