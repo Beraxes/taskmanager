@@ -8,6 +8,8 @@ import {
   Param,
   UseGuards,
   Request,
+  NotFoundException,
+  Req,
 } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -43,5 +45,20 @@ export class TaskController {
   @Delete(':id')
   async deleteTask(@Param('id') id: string, @Request() req: any) {
     return this.taskService.delete(id, req.user.userId);
+  }
+
+  @Get(':id')
+  async getTaskById(@Param('id') id: string, @Req() req) {
+    const task = await this.taskService.findById(id);
+
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    if (task.isPublic || req.user) {
+      return task;
+    }
+
+    throw new NotFoundException('Task not found or not accessible');
   }
 }

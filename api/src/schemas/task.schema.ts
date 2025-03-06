@@ -17,6 +17,9 @@ export class Task extends Document {
 
   @Prop({ default: 'none' })
   category: string;
+
+  @Prop({ required: true, default: false })
+  isPublic: boolean;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

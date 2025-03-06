@@ -16,6 +16,10 @@ export class CreateTaskDto {
   @IsString()
   @IsOptional()
   category?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isPublic?: boolean;
 }
 
 export class UpdateTaskDto {
@@ -34,4 +38,8 @@ export class UpdateTaskDto {
   @IsString()
   @IsOptional()
   category?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isPublic?: boolean;
 }

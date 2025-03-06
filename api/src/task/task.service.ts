@@ -46,4 +46,12 @@ export class TaskService {
     await this.taskModel.deleteOne({ _id: taskId });
     return { message: 'Task deleted successfully' };
   }
+
+  async findPublicTasks(): Promise<Task[]> {
+    return this.taskModel.find({ isPublic: true }).exec(); // ✅ Solo tareas públicas
+  }
+
+  async findById(id: string): Promise<Task | null> {
+    return this.taskModel.findById(id).exec();
+  }
 }
