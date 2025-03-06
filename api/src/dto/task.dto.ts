@@ -17,3 +17,21 @@ export class CreateTaskDto {
   @IsOptional()
   category?: string;
 }
+
+export class UpdateTaskDto {
+  @IsString()
+  @IsOptional()
+  title?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  completed?: boolean;
+
+  @IsString()
+  @IsOptional()
+  category?: string;
+}

@@ -5,6 +5,9 @@ import { Document } from 'mongoose';
 export class RevokedToken extends Document {
   @Prop({ required: true, unique: true })
   token: string;
+
+  @Prop({ required: true, default: Date.now, expires: 3600 })
+  expiresAt: Date;
 }
 
 export type RevokedTokenDocument = RevokedToken & Document;
