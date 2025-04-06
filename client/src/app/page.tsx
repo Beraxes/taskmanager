@@ -1,101 +1,136 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import { useEffect, useState } from "react"
+import TaskCard from "@/components/task-card"
+import AddTaskButton from "@/components/add-task-button"
+import TaskForm from "@/components/task-form"
+import { type Task, TaskStatus } from "@/lib/types"
+import { Clock, CheckCircle2, Coffee, FileText, Pencil } from "lucide-react"
+
+export default function TaskManager() {
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [isAddingTask, setIsAddingTask] = useState(false)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
+
+  // Load tasks from localStorage on component mount
+  useEffect(() => {
+    const savedTasks = localStorage.getItem("tasks")
+    if (savedTasks) {
+      setTasks(JSON.parse(savedTasks))
+    } else {
+      // Set default tasks if none exist
+      const defaultTasks: Task[] = [
+        {
+          id: "1",
+          title: "Task in Progress",
+          description: "",
+          status: TaskStatus.IN_PROGRESS,
+          icon: "clock",
+        },
+        {
+          id: "2",
+          title: "Task Completed",
+          description: "",
+          status: TaskStatus.COMPLETED,
+          icon: "check",
+        },
+        {
+          id: "3",
+          title: "Task Won't Do",
+          description: "",
+          status: TaskStatus.WONT_DO,
+          icon: "coffee",
+        },
+        {
+          id: "4",
+          title: "Task To Do",
+          description: "Work on a Challenge on devChallenges.io, learn TypeScript.",
+          status: TaskStatus.TO_DO,
+          icon: "file",
+        },
+      ]
+      setTasks(defaultTasks)
+      localStorage.setItem("tasks", JSON.stringify(defaultTasks))
+    }
+  }, [])
+
+  // Save tasks to localStorage whenever they change
+  useEffect(() => {
+    if (tasks.length > 0) {
+      localStorage.setItem("tasks", JSON.stringify(tasks))
+    }
+  }, [tasks])
+
+  const addTask = (task: Task) => {
+    const newTasks = [...tasks, task]
+    setTasks(newTasks)
+    setIsAddingTask(false)
+  }
+
+  const updateTask = (updatedTask: Task) => {
+    const newTasks = tasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+    setTasks(newTasks)
+    setEditingTask(null)
+  }
+
+  const deleteTask = (id: string) => {
+    const newTasks = tasks.filter((task) => task.id !== id)
+    setTasks(newTasks)
+  }
+
+  const changeTaskStatus = (id: string, newStatus: TaskStatus) => {
+    const newTasks = tasks.map((task) => (task.id === id ? { ...task, status: newStatus } : task))
+    setTasks(newTasks)
+  }
+
+  const getIconComponent = (iconName: string) => {
+    switch (iconName) {
+      case "clock":
+        return <Clock className="h-5 w-5 text-amber-600" />
+      case "check":
+        return <CheckCircle2 className="h-5 w-5 text-green-600" />
+      case "coffee":
+        return <Coffee className="h-5 w-5 text-red-400" />
+      case "file":
+        return <FileText className="h-5 w-5 text-gray-600" />
+      default:
+        return <FileText className="h-5 w-5 text-gray-600" />
+    }
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+      <div className="mx-auto max-w-md">
+        <div className="mb-6 flex items-center gap-2">
+          <div className="h-8 w-8 rounded-full bg-amber-400 flex items-center justify-center">
+            <div className="h-3 w-3 rounded-full bg-amber-600"></div>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            My Task Board <Pencil className="h-4 w-4 inline-block" />
+          </h1>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <p className="mb-6 text-gray-600">Tasks to keep organised</p>
+
+        <div className="space-y-4">
+          {tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              icon={getIconComponent(task.icon)}
+              onStatusChange={changeTaskStatus}
+              onEdit={() => setEditingTask(task)}
+              onDelete={() => deleteTask(task.id)}
+            />
+          ))}
+
+          {!isAddingTask && <AddTaskButton onClick={() => setIsAddingTask(true)} />}
+        </div>
+
+        {isAddingTask && <TaskForm onSubmit={addTask} onCancel={() => setIsAddingTask(false)} />}
+
+        {editingTask && <TaskForm task={editingTask} onSubmit={updateTask} onCancel={() => setEditingTask(null)} />}
+      </div>
     </div>
-  );
+  )
 }
+
