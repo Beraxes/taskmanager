@@ -17,7 +17,7 @@ import { RevokedTokenController } from './revoked-token.controller';
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '1h' },
+      signOptions: { expiresIn: process.env.JWT_EXPIRATION },
     }),
     MongooseModule.forFeature([
       { name: RevokedToken.name, schema: RevokedTokenSchema },
