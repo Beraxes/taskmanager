@@ -17,4 +17,3 @@ export default function AddTaskButton({ onClick }: AddTaskButtonProps) {
     </button>
   )
 }
-

@@ -14,13 +14,14 @@ interface TaskFormProps {
   task?: Task
   onSubmit: (task: Task) => void
   onCancel: () => void
+  selectedCategory: TaskStatus | null
 }
 
 export default function TaskForm({ task, onSubmit, onCancel }: TaskFormProps) {
   const [title, setTitle] = useState(task?.title || "")
   const [description, setDescription] = useState(task?.description || "")
   const [status, setStatus] = useState<TaskStatus>(task?.status || TaskStatus.TO_DO)
-  const [icon, setIcon] = useState(task?.icon || "file")
+  const [selectedCategory, setSelectedCategory] = useState<TaskStatus | null>(task?.selectedCategory || null)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,7 +33,8 @@ export default function TaskForm({ task, onSubmit, onCancel }: TaskFormProps) {
       title,
       description,
       status,
-      icon,
+      icon: "",
+      selectedCategory,
     }
 
     onSubmit(newTask)
@@ -88,22 +90,6 @@ export default function TaskForm({ task, onSubmit, onCancel }: TaskFormProps) {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="icon" className="text-sm font-medium">
-              Icon
-            </label>
-            <Select value={icon} onValueChange={setIcon}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select icon" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="file">File</SelectItem>
-                <SelectItem value="clock">Clock</SelectItem>
-                <SelectItem value="check">Check</SelectItem>
-                <SelectItem value="coffee">Coffee</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onCancel}>
@@ -116,4 +102,3 @@ export default function TaskForm({ task, onSubmit, onCancel }: TaskFormProps) {
     </Dialog>
   )
 }
-

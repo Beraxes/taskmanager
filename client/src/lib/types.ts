@@ -11,5 +11,5 @@ export interface Task {
   description: string
   status: TaskStatus
   icon: string
+  selectedCategory: TaskStatus | null
 }
-
