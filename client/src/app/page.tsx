@@ -6,27 +6,32 @@ import AddTaskButton from "@/components/add-task-button"
 import TaskForm from "@/components/task-form"
 import { type Task, TaskStatus } from "@/lib/types"
 import { Clock, CheckCircle2, Coffee, FileText, Pencil, Play, CheckCircle, X } from "lucide-react"
+import Navbar from "@/components/navbar"
+import { useAuth } from "@/lib/auth-context"
 
 export default function TaskManager() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [isAddingTask, setIsAddingTask] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<TaskStatus | null>(null)
+  const { user } = useAuth()
 
   // Load tasks from localStorage on component mount
   useEffect(() => {
-    const savedTasks = localStorage.getItem("tasks")
+    // If user is logged in, we could fetch tasks from the server here
+    // For now, we'll just use localStorage for all users
+    const savedTasks = localStorage.getItem(user ? `tasks_${user.id}` : "tasks")
     if (savedTasks) {
       setTasks(JSON.parse(savedTasks))
     }
-  }, [])
+  }, [user])
 
   // Save tasks to localStorage whenever they change
   useEffect(() => {
     if (tasks.length > 0) {
-      localStorage.setItem("tasks", JSON.stringify(tasks))
+      localStorage.setItem(user ? `tasks_${user.id}` : "tasks", JSON.stringify(tasks))
     }
-  }, [tasks])
+  }, [tasks, user])
 
   const addTask = (task: Task) => {
     // If a category is selected, assign that status to the new task
@@ -87,122 +92,135 @@ export default function TaskManager() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="mx-auto max-w-md">
-        <div className="mb-6 flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-amber-400 flex items-center justify-center">
-            <div className="h-3 w-3 rounded-full bg-amber-600"></div>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+
+      <div className="p-4 md:p-8">
+        <div className="mx-auto max-w-md">
+          <div className="mb-6 flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-amber-400 flex items-center justify-center">
+              <div className="h-3 w-3 rounded-full bg-amber-600"></div>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              My Task Board <Pencil className="h-4 w-4 inline-block" />
+            </h1>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            My Task Board <Pencil className="h-4 w-4 inline-block" />
-          </h1>
-        </div>
-        <p className="mb-6 text-gray-600">Tasks to keep organised</p>
+          <p className="mb-6 text-gray-600">Tasks to keep organised</p>
 
-        <div className="space-y-4">
-          {/* Category Headers */}
-          <div className="grid gap-4">
-            <div
-              className={`rounded-xl p-4 bg-amber-100 cursor-pointer ${selectedCategory === TaskStatus.IN_PROGRESS ? "ring-2 ring-amber-400" : ""}`}
-              onClick={() => setSelectedCategory(TaskStatus.IN_PROGRESS)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-amber-600" />
+          {!user && (
+            <div className="mb-4 bg-amber-50 p-4 rounded-xl">
+              <p className="text-amber-800 mb-2">
+                You're using the task manager as a guest. Your tasks are saved on this device only.
+              </p>
+              <p className="text-amber-800 text-sm">To sync your tasks across devices, please login or register.</p>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {/* Category Headers */}
+            <div className="grid gap-4">
+              <div
+                className={`rounded-xl p-4 bg-amber-100 cursor-pointer ${selectedCategory === TaskStatus.IN_PROGRESS ? "ring-2 ring-amber-400" : ""}`}
+                onClick={() => setSelectedCategory(TaskStatus.IN_PROGRESS)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center">
+                      <Clock className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <h3 className="font-medium text-gray-900">Task in Progress</h3>
                   </div>
-                  <h3 className="font-medium text-gray-900">Task in Progress</h3>
+                  <div className="h-8 w-8 rounded-md bg-amber-400 flex items-center justify-center">
+                    <Play className="h-4 w-4 text-white" />
+                  </div>
                 </div>
-                <div className="h-8 w-8 rounded-md bg-amber-400 flex items-center justify-center">
-                  <Play className="h-4 w-4 text-white" />
+              </div>
+
+              <div
+                className={`rounded-xl p-4 bg-green-100 cursor-pointer ${selectedCategory === TaskStatus.COMPLETED ? "ring-2 ring-green-400" : ""}`}
+                onClick={() => setSelectedCategory(TaskStatus.COMPLETED)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center">
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    </div>
+                    <h3 className="font-medium text-gray-900">Task Completed</h3>
+                  </div>
+                  <div className="h-8 w-8 rounded-md bg-green-400 flex items-center justify-center">
+                    <CheckCircle className="h-4 w-4 text-white" />
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className={`rounded-xl p-4 bg-red-100 cursor-pointer ${selectedCategory === TaskStatus.WONT_DO ? "ring-2 ring-red-400" : ""}`}
+                onClick={() => setSelectedCategory(TaskStatus.WONT_DO)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center">
+                      <Coffee className="h-5 w-5 text-red-400" />
+                    </div>
+                    <h3 className="font-medium text-gray-900">Task Won't Do</h3>
+                  </div>
+                  <div className="h-8 w-8 rounded-md bg-red-400 flex items-center justify-center">
+                    <X className="h-4 w-4 text-white" />
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className={`rounded-xl p-4 bg-gray-200 cursor-pointer ${selectedCategory === TaskStatus.TO_DO ? "ring-2 ring-gray-400" : ""}`}
+                onClick={() => setSelectedCategory(TaskStatus.TO_DO)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center">
+                      <FileText className="h-5 w-5 text-gray-600" />
+                    </div>
+                    <h3 className="font-medium text-gray-900">Task To Do</h3>
+                  </div>
+                  <div className="h-8 w-8 rounded-md bg-gray-300 flex items-center justify-center">
+                    <Play className="h-4 w-4 text-gray-600" />
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div
-              className={`rounded-xl p-4 bg-green-100 cursor-pointer ${selectedCategory === TaskStatus.COMPLETED ? "ring-2 ring-green-400" : ""}`}
-              onClick={() => setSelectedCategory(TaskStatus.COMPLETED)}
+            {/* Show All Categories Button */}
+            <button
+              className="w-full rounded-xl bg-white border border-gray-200 p-2 text-sm font-medium hover:bg-gray-50 transition-colors"
+              onClick={() => setSelectedCategory(null)}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center">
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
-                  </div>
-                  <h3 className="font-medium text-gray-900">Task Completed</h3>
-                </div>
-                <div className="h-8 w-8 rounded-md bg-green-400 flex items-center justify-center">
-                  <CheckCircle className="h-4 w-4 text-white" />
-                </div>
-              </div>
-            </div>
+              {selectedCategory ? "Show All Categories" : "All Categories (Selected)"}
+            </button>
 
-            <div
-              className={`rounded-xl p-4 bg-red-100 cursor-pointer ${selectedCategory === TaskStatus.WONT_DO ? "ring-2 ring-red-400" : ""}`}
-              onClick={() => setSelectedCategory(TaskStatus.WONT_DO)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center">
-                    <Coffee className="h-5 w-5 text-red-400" />
-                  </div>
-                  <h3 className="font-medium text-gray-900">Task Won't Do</h3>
-                </div>
-                <div className="h-8 w-8 rounded-md bg-red-400 flex items-center justify-center">
-                  <X className="h-4 w-4 text-white" />
-                </div>
-              </div>
-            </div>
+            {/* Add New Task Button - Moved above the task list */}
+            {!isAddingTask && <AddTaskButton onClick={() => setIsAddingTask(true)} />}
 
-            <div
-              className={`rounded-xl p-4 bg-gray-200 cursor-pointer ${selectedCategory === TaskStatus.TO_DO ? "ring-2 ring-gray-400" : ""}`}
-              onClick={() => setSelectedCategory(TaskStatus.TO_DO)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center">
-                    <FileText className="h-5 w-5 text-gray-600" />
-                  </div>
-                  <h3 className="font-medium text-gray-900">Task To Do</h3>
-                </div>
-                <div className="h-8 w-8 rounded-md bg-gray-300 flex items-center justify-center">
-                  <Play className="h-4 w-4 text-gray-600" />
-                </div>
-              </div>
-            </div>
+            {/* Filtered Tasks */}
+            {tasks
+              .filter((task) => selectedCategory === null || task.status === selectedCategory)
+              .map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  icon={getIconComponent(task.icon)}
+                  onStatusChange={changeTaskStatus}
+                  onEdit={() => setEditingTask(task)}
+                  onDelete={() => deleteTask(task.id)}
+                  onUpdate={updateTask}
+                />
+              ))}
           </div>
 
-          {/* Show All Categories Button */}
-          <button
-            className="w-full rounded-xl bg-white border border-gray-200 p-2 text-sm font-medium hover:bg-gray-50 transition-colors"
-            onClick={() => setSelectedCategory(null)}
-          >
-            {selectedCategory ? "Show All Categories" : "All Categories (Selected)"}
-          </button>
+          {isAddingTask && (
+            <TaskForm onSubmit={addTask} onCancel={() => setIsAddingTask(false)} selectedCategory={selectedCategory} />
+          )}
 
-          {/* Add New Task Button - Moved above the task list */}
-          {!isAddingTask && <AddTaskButton onClick={() => setIsAddingTask(true)} />}
-
-          {/* Filtered Tasks */}
-          {tasks
-            .filter((task) => selectedCategory === null || task.status === selectedCategory)
-            .map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                icon={getIconComponent(task.icon)}
-                onStatusChange={changeTaskStatus}
-                onEdit={() => setEditingTask(task)}
-                onDelete={() => deleteTask(task.id)}
-                onUpdate={updateTask}
-              />
-            ))}
+          {editingTask && <TaskForm task={editingTask} onSubmit={updateTask} onCancel={() => setEditingTask(null)} />}
         </div>
-
-        {isAddingTask && (
-          <TaskForm onSubmit={addTask} onCancel={() => setIsAddingTask(false)} selectedCategory={selectedCategory} />
-        )}
-
-        {editingTask && <TaskForm task={editingTask} onSubmit={updateTask} onCancel={() => setEditingTask(null)} selectedCategory={selectedCategory} />}
       </div>
     </div>
   )

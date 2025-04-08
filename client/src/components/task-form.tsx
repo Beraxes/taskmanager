@@ -14,14 +14,14 @@ interface TaskFormProps {
   task?: Task
   onSubmit: (task: Task) => void
   onCancel: () => void
-  selectedCategory: TaskStatus | null
+  selectedCategory?: TaskStatus | null
 }
 
-export default function TaskForm({ task, onSubmit, onCancel }: TaskFormProps) {
+export default function TaskForm({ task, onSubmit, onCancel, selectedCategory }: TaskFormProps) {
   const [title, setTitle] = useState(task?.title || "")
   const [description, setDescription] = useState(task?.description || "")
-  const [status, setStatus] = useState<TaskStatus>(task?.status || TaskStatus.TO_DO)
-  const [selectedCategory, setSelectedCategory] = useState<TaskStatus | null>(task?.selectedCategory || null)
+  const [status, setStatus] = useState<TaskStatus>(task?.status || selectedCategory || TaskStatus.TO_DO)
+  const [icon, setIcon] = useState(task?.icon || "file")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,8 +33,7 @@ export default function TaskForm({ task, onSubmit, onCancel }: TaskFormProps) {
       title,
       description,
       status,
-      icon: "",
-      selectedCategory,
+      icon,
     }
 
     onSubmit(newTask)
@@ -77,7 +76,11 @@ export default function TaskForm({ task, onSubmit, onCancel }: TaskFormProps) {
             <label htmlFor="status" className="text-sm font-medium">
               Status
             </label>
-            <Select value={status} onValueChange={(value) => setStatus(value as TaskStatus)}>
+            <Select
+              value={status}
+              onValueChange={(value) => setStatus(value as TaskStatus)}
+              defaultValue={selectedCategory || undefined}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
