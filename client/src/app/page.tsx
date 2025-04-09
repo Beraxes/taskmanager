@@ -8,32 +8,100 @@ import { type Task, TaskStatus } from "@/lib/types"
 import { Clock, CheckCircle2, Coffee, FileText, Pencil, Play, CheckCircle, X } from "lucide-react"
 import Navbar from "@/components/navbar"
 import { useAuth } from "@/lib/auth-context"
+import { fetchTasks, createTask, updateTask, deleteTask } from "@/lib/task-service"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function TaskManager() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [isAddingTask, setIsAddingTask] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<TaskStatus | null>(null)
-  const { user } = useAuth()
+  const [isSyncing, setIsSyncing] = useState(false)
+  const { user, syncLocalTasks, shouldClearTasks, clearTasks } = useAuth()
+  const { toast } = useToast()
 
-  // Load tasks from localStorage on component mount
+  // Load tasks on component mount and when user changes
   useEffect(() => {
-    // If user is logged in, we could fetch tasks from the server here
-    // For now, we'll just use localStorage for all users
-    const savedTasks = localStorage.getItem(user ? `tasks_${user.id}` : "tasks")
-    if (savedTasks) {
-      setTasks(JSON.parse(savedTasks))
+    const loadTasks = async () => {
+      try {
+        if (user && user.token) {
+          // If user is logged in, fetch tasks from API
+          const apiTasks = await fetchTasks(user.token)
+          setTasks(apiTasks)
+        } else {
+          // If user is not logged in, load from localStorage
+          const savedTasks = localStorage.getItem("tasks")
+          if (savedTasks) {
+            setTasks(JSON.parse(savedTasks))
+          }
+        }
+      } catch (error) {
+        console.error("Error loading tasks:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load tasks. Please try again.",
+          variant: "destructive",
+        })
+      }
     }
-  }, [user])
 
-  // Save tasks to localStorage whenever they change
+    loadTasks()
+  }, [user, toast])
+
+  // Sync local tasks with API when user logs in
   useEffect(() => {
-    if (tasks.length > 0) {
-      localStorage.setItem(user ? `tasks_${user.id}` : "tasks", JSON.stringify(tasks))
+    const syncTasksOnLogin = async () => {
+      if (user && user.token) {
+        // Check if there are local tasks to sync
+        const localTasks = localStorage.getItem("tasks")
+        if (localTasks) {
+          try {
+            setIsSyncing(true)
+            const parsedTasks = JSON.parse(localTasks)
+            if (parsedTasks.length > 0) {
+              // Sync local tasks with API
+              const syncedTasks = await syncLocalTasks(parsedTasks)
+              setTasks(syncedTasks)
+              // Clear local storage after successful sync
+              localStorage.removeItem("tasks")
+              toast({
+                title: "Tasks Synced",
+                description: `Successfully synced ${parsedTasks.length} tasks with your account.`,
+              })
+            }
+          } catch (error) {
+            console.error("Error syncing tasks:", error)
+            toast({
+              title: "Sync Failed",
+              description: "Failed to sync tasks with your account. Please try again.",
+              variant: "destructive",
+            })
+          } finally {
+            setIsSyncing(false)
+          }
+        }
+      }
     }
-  }, [tasks, user])
 
-  const addTask = (task: Task) => {
+    syncTasksOnLogin()
+  }, [user, syncLocalTasks, toast])
+
+  // Add this effect to clear tasks when user logs out
+  useEffect(() => {
+    if (shouldClearTasks) {
+      setTasks([])
+      clearTasks()
+    }
+  }, [shouldClearTasks, clearTasks])
+
+  // Update the localStorage saving effect to check for shouldClearTasks
+  useEffect(() => {
+    if (!user && tasks.length > 0 && !shouldClearTasks) {
+      localStorage.setItem("tasks", JSON.stringify(tasks))
+    }
+  }, [tasks, user, shouldClearTasks])
+
+  const addTask = async (task: Task) => {
     // If a category is selected, assign that status to the new task
     if (selectedCategory) {
       task.status = selectedCategory
@@ -55,25 +123,94 @@ export default function TaskManager() {
       }
     }
 
-    const newTasks = [...tasks, task]
-    setTasks(newTasks)
-    setIsAddingTask(false)
+    try {
+      if (user && user.token) {
+        // If user is logged in, create task on API
+        const createdTask = await createTask(task, user.token)
+        setTasks([...tasks, createdTask])
+      } else {
+        // If user is not logged in, save to local state
+        const newTasks = [...tasks, task]
+        setTasks(newTasks)
+      }
+      setIsAddingTask(false)
+    } catch (error) {
+      console.error("Error adding task:", error)
+      toast({
+        title: "Error",
+        description: "Failed to add task. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const updateTask = (updatedTask: Task) => {
-    const newTasks = tasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
-    setTasks(newTasks)
-    setEditingTask(null)
+  const updateTaskHandler = async (updatedTask: Task) => {
+    try {
+      if (user && user.token) {
+        // If user is logged in, update task on API
+        const updated = await updateTask(updatedTask, user.token)
+        const newTasks = tasks.map((task) => (task.id === updated.id ? updated : task))
+        setTasks(newTasks)
+      } else {
+        // If user is not logged in, update in local state
+        const newTasks = tasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+        setTasks(newTasks)
+      }
+      setEditingTask(null)
+    } catch (error) {
+      console.error("Error updating task:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update task. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const deleteTask = (id: string) => {
-    const newTasks = tasks.filter((task) => task.id !== id)
-    setTasks(newTasks)
+  const deleteTaskHandler = async (id: string) => {
+    try {
+      if (user && user.token) {
+        // If user is logged in, delete task from API
+        await deleteTask(id, user.token)
+      }
+      // Remove from local state regardless
+      const newTasks = tasks.filter((task) => task.id !== id)
+      setTasks(newTasks)
+    } catch (error) {
+      console.error("Error deleting task:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete task. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const changeTaskStatus = (id: string, newStatus: TaskStatus) => {
-    const newTasks = tasks.map((task) => (task.id === id ? { ...task, status: newStatus } : task))
-    setTasks(newTasks)
+  const changeTaskStatus = async (id: string, newStatus: TaskStatus) => {
+    try {
+      const taskToUpdate = tasks.find((task) => task.id === id)
+      if (!taskToUpdate) return
+
+      const updatedTask = { ...taskToUpdate, status: newStatus }
+
+      if (user && user.token) {
+        // If user is logged in, update task on API
+        const updated = await updateTask(updatedTask, user.token)
+        const newTasks = tasks.map((task) => (task.id === updated.id ? updated : task))
+        setTasks(newTasks)
+      } else {
+        // If user is not logged in, update in local state
+        const newTasks = tasks.map((task) => (task.id === id ? updatedTask : task))
+        setTasks(newTasks)
+      }
+    } catch (error) {
+      console.error("Error changing task status:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update task status. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   const getIconComponent = (iconName: string) => {
@@ -113,6 +250,27 @@ export default function TaskManager() {
                 You're using the task manager as a guest. Your tasks are saved on this device only.
               </p>
               <p className="text-amber-800 text-sm">To sync your tasks across devices, please login or register.</p>
+            </div>
+          )}
+
+          {isSyncing && (
+            <div className="mb-4 bg-blue-50 p-4 rounded-xl">
+              <p className="text-blue-800 flex items-center">
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Syncing your tasks...
+              </p>
             </div>
           )}
 
@@ -197,7 +355,7 @@ export default function TaskManager() {
             </button>
 
             {/* Add New Task Button - Moved above the task list */}
-            {!isAddingTask && <AddTaskButton onClick={() => setIsAddingTask(true)} />}
+            {!isAddingTask && !isSyncing && <AddTaskButton onClick={() => setIsAddingTask(true)} />}
 
             {/* Filtered Tasks */}
             {tasks
@@ -209,17 +367,25 @@ export default function TaskManager() {
                   icon={getIconComponent(task.icon)}
                   onStatusChange={changeTaskStatus}
                   onEdit={() => setEditingTask(task)}
-                  onDelete={() => deleteTask(task.id)}
-                  onUpdate={updateTask}
+                  onDelete={() => deleteTaskHandler(task.id)}
+                  onUpdate={updateTaskHandler}
                 />
               ))}
+
+            {tasks.length === 0 && !isSyncing && (
+              <div className="text-center p-8 bg-gray-50 rounded-xl border border-gray-200">
+                <p className="text-gray-500">No tasks yet. Add your first task to get started!</p>
+              </div>
+            )}
           </div>
 
           {isAddingTask && (
             <TaskForm onSubmit={addTask} onCancel={() => setIsAddingTask(false)} selectedCategory={selectedCategory} />
           )}
 
-          {editingTask && <TaskForm task={editingTask} onSubmit={updateTask} onCancel={() => setEditingTask(null)} />}
+          {editingTask && (
+            <TaskForm task={editingTask} onSubmit={updateTaskHandler} onCancel={() => setEditingTask(null)} />
+          )}
         </div>
       </div>
     </div>
