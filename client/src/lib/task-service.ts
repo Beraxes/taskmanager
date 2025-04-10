@@ -47,7 +47,7 @@ export function localTaskToApiTask(task: Task): ApiTask {
     description: task.description,
     completed: task.status === TaskStatus.COMPLETED,
     category,
-    isPublic: false,
+    isPublic: task.isPublic || false,
   }
 }
 

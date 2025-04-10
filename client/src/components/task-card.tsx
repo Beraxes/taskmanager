@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { type Task, TaskStatus } from "@/lib/types"
-import { Play, CheckCircle, X, Clock, CheckCircle2, Coffee, FileText, Save, XCircle, Trash2 } from "lucide-react"
+import { Play, CheckCircle, X, Clock, CheckCircle2, Coffee, FileText, Save, XCircle, Trash2, Globe, Lock } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -26,15 +26,18 @@ interface TaskCardProps {
   onEdit: () => void
   onDelete: () => void
   onUpdate: (updatedTask: Task) => void
+  isLoggedIn?: boolean
+  onTogglePublic?: (id: string, isPublic: boolean) => void
 }
 
-export default function TaskCard({ task, icon, onStatusChange, onEdit, onDelete, onUpdate }: TaskCardProps) {
+export default function TaskCard({ task, icon, onStatusChange, onEdit, onDelete, onUpdate, isLoggedIn, onTogglePublic }: TaskCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
   const [editDescription, setEditDescription] = useState(task.description)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isPublic, setIsPublic] = useState(task.isPublic || false)
 
   const menuRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -181,15 +184,36 @@ export default function TaskCard({ task, icon, onStatusChange, onEdit, onDelete,
     setShowDeleteConfirm(true)
   }
 
+  const handleTogglePublic = () => {
+    const newIsPublic = !isPublic
+    setIsPublic(newIsPublic)
+    if (onTogglePublic) {
+      onTogglePublic(task.id, newIsPublic)
+    }
+  }
+
   return (
     <>
       <div
-        className={`rounded-xl p-4 ${getCardStyle()}`}
+        className={`rounded-xl p-4 ${getCardStyle()} relative`}
         onClick={(e) => {
           // Prevent clicks on the card from closing menus
           e.stopPropagation()
         }}
       >
+        {isLoggedIn && (
+          <button
+            onClick={handleTogglePublic}
+            className="absolute top-2 right-2 h-6 w-6 rounded-full bg-white flex items-center justify-center shadow-sm hover:bg-gray-100 transition-colors"
+            title={isPublic ? "Make private" : "Make public"}
+          >
+            {isPublic ? (
+              <Globe className="h-3.5 w-3.5 text-green-600" />
+            ) : (
+              <Lock className="h-3.5 w-3.5 text-gray-600" />
+            )}
+          </button>
+        )}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1">
             <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center">

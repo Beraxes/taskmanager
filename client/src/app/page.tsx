@@ -287,6 +287,48 @@ export default function TaskManager() {
         return <FileText className="h-5 w-5 text-gray-600" />
     }
   }
+  
+  const toggleTaskPublic = async (id: string, isPublic: boolean) => {
+    try {
+      const taskToUpdate = tasks.find((task) => task.id === id)
+      if (!taskToUpdate) return
+
+      const updatedTask = { ...taskToUpdate, isPublic }
+
+      if (user && user.token) {
+        // If user is logged in, update task on API
+        const updated = await updateTask(updatedTask, user.token)
+        const newTasks = tasks.map((task) => (task.id === updated.id ? updated : task))
+        setTasks(newTasks)
+
+        toast({
+          title: isPublic ? "Task made public" : "Task made private",
+          description: isPublic ? "This task is now visible to others." : "This task is now private.",
+        })
+      } else {
+        // If user is not logged in, update in local state
+        const newTasks = tasks.map((task) => (task.id === id ? updatedTask : task))
+        setTasks(newTasks)
+      }
+    } catch (error) {
+      console.error("Error changing task public status:", error)
+
+      if (error instanceof UnauthorizedError) {
+        handleUnauthorized()
+        toast({
+          title: "Session Expired",
+          description: "Your session has expired. Please login again.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update task visibility. Please try again.",
+          variant: "destructive",
+        })
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -429,6 +471,8 @@ export default function TaskManager() {
                   onEdit={() => setEditingTask(task)}
                   onDelete={() => deleteTaskHandler(task.id)}
                   onUpdate={updateTaskHandler}
+                  isLoggedIn={!!user}
+                  onTogglePublic={toggleTaskPublic}
                 />
               ))}
 
