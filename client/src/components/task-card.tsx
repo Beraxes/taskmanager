@@ -3,10 +3,21 @@
 import type React from "react"
 
 import { type Task, TaskStatus } from "@/lib/types"
-import { Play, CheckCircle, X, Clock, CheckCircle2, Coffee, FileText, Save, XCircle } from "lucide-react"
+import { Play, CheckCircle, X, Clock, CheckCircle2, Coffee, FileText, Save, XCircle, Trash2 } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface TaskCardProps {
   task: Task
@@ -23,6 +34,7 @@ export default function TaskCard({ task, icon, onStatusChange, onEdit, onDelete,
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
   const [editDescription, setEditDescription] = useState(task.description)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const menuRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -165,88 +177,122 @@ export default function TaskCard({ task, icon, onStatusChange, onEdit, onDelete,
     setIsEditing(false)
   }
 
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true)
+  }
+
   return (
-    <div
-      className={`rounded-xl p-4 ${getCardStyle()}`}
-      onClick={(e) => {
-        // Prevent clicks on the card from closing menus
-        e.stopPropagation()
-      }}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3 flex-1">
-          <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center">
-            {task.status === TaskStatus.IN_PROGRESS && <Clock className="h-5 w-5 text-amber-600" />}
-            {task.status === TaskStatus.COMPLETED && <CheckCircle2 className="h-5 w-5 text-green-600" />}
-            {task.status === TaskStatus.WONT_DO && <Coffee className="h-5 w-5 text-red-400" />}
-            {task.status === TaskStatus.TO_DO && <FileText className="h-5 w-5 text-gray-600" />}
+    <>
+      <div
+        className={`rounded-xl p-4 ${getCardStyle()}`}
+        onClick={(e) => {
+          // Prevent clicks on the card from closing menus
+          e.stopPropagation()
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 flex-1">
+            <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center">
+              {task.status === TaskStatus.IN_PROGRESS && <Clock className="h-5 w-5 text-amber-600" />}
+              {task.status === TaskStatus.COMPLETED && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              {task.status === TaskStatus.WONT_DO && <Coffee className="h-5 w-5 text-red-400" />}
+              {task.status === TaskStatus.TO_DO && <FileText className="h-5 w-5 text-gray-600" />}
+            </div>
+            {isEditing ? (
+              <div className="flex-1 space-y-2">
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Task title"
+                  className="w-full"
+                />
+                <Textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Task description (optional)"
+                  rows={2}
+                  className="w-full"
+                />
+                <div className="flex gap-2">
+                  <button
+                    className="flex items-center gap-1 text-sm text-green-600 hover:text-green-700"
+                    onClick={handleSaveEdit}
+                  >
+                    <Save className="h-3 w-3" /> Save
+                  </button>
+                  <button
+                    className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-700"
+                    onClick={handleCancelEdit}
+                  >
+                    <XCircle className="h-3 w-3" /> Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1" onDoubleClick={() => setIsEditing(true)}>
+                <h3 className="font-medium text-gray-900">{task.title}</h3>
+                {task.description && <p className="text-sm text-gray-600">{task.description}</p>}
+                <p className="text-xs text-gray-500 mt-1">Double-click to edit</p>
+              </div>
+            )}
           </div>
-          {isEditing ? (
-            <div className="flex-1 space-y-2">
-              <Input
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                placeholder="Task title"
-                className="w-full"
-              />
-              <Textarea
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                placeholder="Task description (optional)"
-                rows={2}
-                className="w-full"
-              />
-              <div className="flex gap-2">
-                <button
-                  className="flex items-center gap-1 text-sm text-green-600 hover:text-green-700"
-                  onClick={handleSaveEdit}
-                >
-                  <Save className="h-3 w-3" /> Save
-                </button>
-                <button
-                  className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-700"
-                  onClick={handleCancelEdit}
-                >
-                  <XCircle className="h-3 w-3" /> Cancel
-                </button>
+          <div className="relative flex gap-2">
+            {!isEditing && getActionButton()}
+            {!isEditing && (
+              <Button
+                variant="destructive"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleDeleteClick}
+                title="Delete task"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            {isMenuOpen && !isEditing && (
+              <div className="absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg z-10">
+                <div className="py-1">
+                  <button
+                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => {
+                      setIsEditing(true)
+                      setIsMenuOpen(false)
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+                    onClick={() => {
+                      onDelete()
+                      setIsMenuOpen(false)
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex-1" onDoubleClick={() => setIsEditing(true)}>
-              <h3 className="font-medium text-gray-900">{task.title}</h3>
-              {task.description && <p className="text-sm text-gray-600">{task.description}</p>}
-              <p className="text-xs text-gray-500 mt-1">Double-click to edit</p>
-            </div>
-          )}
-        </div>
-        <div className="relative">
-          {!isEditing && getActionButton()}
-          {isMenuOpen && !isEditing && (
-            <div className="absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg z-10">
-              <div className="py-1">
-                <button
-                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
-                  onClick={() => {
-                    setIsEditing(true)
-                    setIsMenuOpen(false)
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
-                  onClick={() => {
-                    onDelete()
-                    setIsMenuOpen(false)
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the task.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

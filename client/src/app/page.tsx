@@ -8,7 +8,7 @@ import { type Task, TaskStatus } from "@/lib/types"
 import { Clock, CheckCircle2, Coffee, FileText, Pencil, Play, CheckCircle, X } from "lucide-react"
 import Navbar from "@/components/navbar"
 import { useAuth } from "@/lib/auth-context"
-import { fetchTasks, createTask, updateTask, deleteTask } from "@/lib/task-service"
+import { fetchTasks, createTask, updateTask, deleteTask, UnauthorizedError } from "@/lib/task-service"
 import { useToast } from "@/components/ui/use-toast"
 
 export default function TaskManager() {
@@ -17,7 +17,7 @@ export default function TaskManager() {
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<TaskStatus | null>(null)
   const [isSyncing, setIsSyncing] = useState(false)
-  const { user, syncLocalTasks, shouldClearTasks, clearTasks } = useAuth()
+  const { user, syncLocalTasks, shouldClearTasks, clearTasks, handleUnauthorized } = useAuth()
   const { toast } = useToast()
 
   // Load tasks on component mount and when user changes
@@ -37,16 +37,26 @@ export default function TaskManager() {
         }
       } catch (error) {
         console.error("Error loading tasks:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load tasks. Please try again.",
-          variant: "destructive",
-        })
+
+        if (error instanceof UnauthorizedError) {
+          handleUnauthorized()
+          toast({
+            title: "Session Expired",
+            description: "Your session has expired. Please login again.",
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to load tasks. Please try again.",
+            variant: "destructive",
+          })
+        }
       }
     }
 
     loadTasks()
-  }, [user, toast])
+  }, [user, toast, handleUnauthorized])
 
   // Sync local tasks with API when user logs in
   useEffect(() => {
@@ -71,11 +81,21 @@ export default function TaskManager() {
             }
           } catch (error) {
             console.error("Error syncing tasks:", error)
-            toast({
-              title: "Sync Failed",
-              description: "Failed to sync tasks with your account. Please try again.",
-              variant: "destructive",
-            })
+
+            if (error instanceof UnauthorizedError) {
+              handleUnauthorized()
+              toast({
+                title: "Session Expired",
+                description: "Your session has expired. Please login again.",
+                variant: "destructive",
+              })
+            } else {
+              toast({
+                title: "Sync Failed",
+                description: "Failed to sync tasks with your account. Please try again.",
+                variant: "destructive",
+              })
+            }
           } finally {
             setIsSyncing(false)
           }
@@ -84,7 +104,7 @@ export default function TaskManager() {
     }
 
     syncTasksOnLogin()
-  }, [user, syncLocalTasks, toast])
+  }, [user, syncLocalTasks, toast, handleUnauthorized])
 
   // Add this effect to clear tasks when user logs out
   useEffect(() => {
@@ -136,11 +156,21 @@ export default function TaskManager() {
       setIsAddingTask(false)
     } catch (error) {
       console.error("Error adding task:", error)
-      toast({
-        title: "Error",
-        description: "Failed to add task. Please try again.",
-        variant: "destructive",
-      })
+
+      if (error instanceof UnauthorizedError) {
+        handleUnauthorized()
+        toast({
+          title: "Session Expired",
+          description: "Your session has expired. Please login again.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to add task. Please try again.",
+          variant: "destructive",
+        })
+      }
     }
   }
 
@@ -159,11 +189,21 @@ export default function TaskManager() {
       setEditingTask(null)
     } catch (error) {
       console.error("Error updating task:", error)
-      toast({
-        title: "Error",
-        description: "Failed to update task. Please try again.",
-        variant: "destructive",
-      })
+
+      if (error instanceof UnauthorizedError) {
+        handleUnauthorized()
+        toast({
+          title: "Session Expired",
+          description: "Your session has expired. Please login again.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update task. Please try again.",
+          variant: "destructive",
+        })
+      }
     }
   }
 
@@ -178,11 +218,21 @@ export default function TaskManager() {
       setTasks(newTasks)
     } catch (error) {
       console.error("Error deleting task:", error)
-      toast({
-        title: "Error",
-        description: "Failed to delete task. Please try again.",
-        variant: "destructive",
-      })
+
+      if (error instanceof UnauthorizedError) {
+        handleUnauthorized()
+        toast({
+          title: "Session Expired",
+          description: "Your session has expired. Please login again.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete task. Please try again.",
+          variant: "destructive",
+        })
+      }
     }
   }
 
@@ -205,11 +255,21 @@ export default function TaskManager() {
       }
     } catch (error) {
       console.error("Error changing task status:", error)
-      toast({
-        title: "Error",
-        description: "Failed to update task status. Please try again.",
-        variant: "destructive",
-      })
+
+      if (error instanceof UnauthorizedError) {
+        handleUnauthorized()
+        toast({
+          title: "Session Expired",
+          description: "Your session has expired. Please login again.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update task status. Please try again.",
+          variant: "destructive",
+        })
+      }
     }
   }
 

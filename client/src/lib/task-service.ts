@@ -15,6 +15,14 @@ export interface ApiTask {
   __v?: number
 }
 
+// Custom error for unauthorized responses
+export class UnauthorizedError extends Error {
+  constructor(message = "Unauthorized") {
+    super(message)
+    this.name = "UnauthorizedError"
+  }
+}
+
 // Convert local Task to API Task format
 export function localTaskToApiTask(task: Task): ApiTask {
   // Map TaskStatus to category string
@@ -93,6 +101,21 @@ export function apiTaskToLocalTask(apiTask: ApiTask): Task {
   }
 }
 
+// Helper function to check for unauthorized responses
+async function handleResponse(response: Response) {
+  if (response.status === 401) {
+    const errorData = await response.json().catch(() => ({ message: "Unauthorized" }))
+    throw new UnauthorizedError(errorData.message || "Unauthorized")
+  }
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: "Request failed" }))
+    throw new Error(errorData.message || "Request failed")
+  }
+
+  return response
+}
+
 // Get all tasks from the API
 export async function fetchTasks(token: string): Promise<Task[]> {
   try {
@@ -104,11 +127,7 @@ export async function fetchTasks(token: string): Promise<Task[]> {
       },
     })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: "Failed to fetch tasks" }))
-      throw new Error(errorData.message || "Failed to fetch tasks")
-    }
-
+    await handleResponse(response)
     const apiTasks: ApiTask[] = await response.json()
     return apiTasks.map(apiTaskToLocalTask)
   } catch (error) {
@@ -130,11 +149,7 @@ export async function createTask(task: Task, token: string): Promise<Task> {
       body: JSON.stringify(apiTask),
     })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: "Failed to create task" }))
-      throw new Error(errorData.message || "Failed to create task")
-    }
-
+    await handleResponse(response)
     const createdTask: ApiTask = await response.json()
     return apiTaskToLocalTask(createdTask)
   } catch (error) {
@@ -156,11 +171,7 @@ export async function updateTask(task: Task, token: string): Promise<Task> {
       body: JSON.stringify(apiTask),
     })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: "Failed to update task" }))
-      throw new Error(errorData.message || "Failed to update task")
-    }
-
+    await handleResponse(response)
     const updatedTask: ApiTask = await response.json()
     return apiTaskToLocalTask(updatedTask)
   } catch (error) {
@@ -180,10 +191,7 @@ export async function deleteTask(taskId: string, token: string): Promise<void> {
       },
     })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: "Failed to delete task" }))
-      throw new Error(errorData.message || "Failed to delete task")
-    }
+    await handleResponse(response)
   } catch (error) {
     console.error("Error deleting task:", error)
     throw error

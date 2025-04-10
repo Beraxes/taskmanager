@@ -8,7 +8,7 @@ import { Toaster } from "@/components/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "My Task Board",
+  title: "Task Manager",
   description: "A stylish task manager to keep you organized",
 }
 

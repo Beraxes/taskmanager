@@ -13,6 +13,7 @@ interface AuthContextType {
   isLoading: boolean
   syncLocalTasks: (tasks: Task[]) => Promise<Task[]>
   clearTasks: () => void
+  handleUnauthorized: () => void
   shouldClearTasks: boolean
 }
 
@@ -63,11 +64,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     localStorage.removeItem("user")
     setShouldClearTasks(true)
+    // Also remove any tasks from localStorage to ensure they don't persist
     localStorage.removeItem("tasks")
   }
 
   const clearTasks = () => {
     setShouldClearTasks(false)
+  }
+
+  const handleUnauthorized = () => {
+    // If we get an unauthorized error, log the user out
+    if (user) {
+      logout()
+    }
   }
 
   const syncLocalTasks = async (tasks: Task[]): Promise<Task[]> => {
@@ -86,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     syncLocalTasks,
     clearTasks,
+    handleUnauthorized,
     shouldClearTasks,
   }
 
