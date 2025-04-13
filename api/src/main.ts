@@ -8,7 +8,10 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create(AppModule);
-  app.enableCors();
+  app.enableCors({
+    origin: true, // o un dominio específico como 'https://tudominio.com'
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
